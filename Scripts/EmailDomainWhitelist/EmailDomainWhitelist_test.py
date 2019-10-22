@@ -1,5 +1,4 @@
 import demistomock as demisto
-import pytest
 
 EMAIL_ADDRESSES = 'email@domain.com,filterme@nowhere.com,nobody@demistotest.com'
 EMAIL_ADDRESSES_LIST = ['email@domain.com', 'filterme@nowhere.com', 'nobody@demistotest.com']
