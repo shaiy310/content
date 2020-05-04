@@ -1,5 +1,5 @@
 ## [Unreleased]
-
+  - Added Request Parameters Through the URL
 
 ## [20.5.0] - 2020-05-12
   - Removed `Long Running Instance` from instance configuration.
