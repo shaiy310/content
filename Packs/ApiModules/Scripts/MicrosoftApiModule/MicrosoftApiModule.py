@@ -1,3 +1,5 @@
+import traceback
+
 import demistomock as demisto
 from CommonServerPython import *
 from CommonServerUserPython import *
@@ -75,7 +77,7 @@ class MicrosoftClient(BaseClient):
         self.auth_type = SELF_DEPLOYED_AUTH_TYPE if self_deployed else OPROXY_AUTH_TYPE
         self.verify = verify
 
-    def http_request(self, *args, resp_type='json', headers=None, **kwargs):
+    def http_request(self, *args, resp_type='json', headers=None, return_empty_response=False, **kwargs):
         """
         Overrides Base client request function, retrieves and adds to headers access token before sending the request.
 
@@ -98,6 +100,10 @@ class MicrosoftClient(BaseClient):
         # In that case, logs with the warning header will be written.
         if response.status_code == 206:
             demisto.debug(str(response.headers))
+
+        is_response_empty_and_successful = (response.status_code == 204)
+        if is_response_empty_and_successful and return_empty_response:
+            return response
 
         try:
             if resp_type == 'json':
@@ -359,7 +365,12 @@ class MicrosoftClient(BaseClient):
                 bytes: Encrypted value
             """
             # String to bytes
-            enc_key = base64.b64decode(enc_key)
+            try:
+                enc_key = base64.b64decode(enc_key)
+            except Exception as err:
+                return_error(f"Error in Microsoft authorization: {str(err)}"
+                             f" Please check authentication related parameters.", error=traceback.format_exc())
+
             # Create key
             aes_gcm = AESGCM(enc_key)
             # Create nonce
