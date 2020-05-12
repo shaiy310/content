@@ -36,7 +36,6 @@ class Client(BaseClient):
         domains = []
         ipv4s = []
         ipv4cidrs = []
-
         r = self._http_request('GET', url_suffix='', full_url=self._base_url, resp_type='text')
 
         soup = BeautifulSoup(r, 'html.parser')

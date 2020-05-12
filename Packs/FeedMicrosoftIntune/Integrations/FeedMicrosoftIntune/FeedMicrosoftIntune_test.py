@@ -1,15 +1,18 @@
 from FeedMicrosoftIntune import Client
 
-BASE_URL = 'https://docs.microsoft.com/en-us/intune/fundamentals/intune-endpoints'
+URL = 'https://docs.microsoft.com/en-us/intune/fundamentals/intune-endpoints'
 
 
-def test_build_iterator():
+def test_build_iterator(requests_mock):
+    with open('test_data/Microsoft_endpoint_mock.html', 'r') as file:
+        response = file.read()
+    requests_mock.get(URL, text=response)
     expected_domain = 'login.microsoftonline.com'
     expected_domain_glob = '*.manage.microsoft.com'
     expected_ip = '52.175.12.209'
     expected_cidr = '40.82.248.224/28'
     client = Client(
-        base_url=BASE_URL,
+        base_url=URL,
         verify=False,
         proxy=False,
     )
