@@ -4,6 +4,7 @@ from CommonServerUserPython import *
 from dateutil.parser import parse
 
 # Disable insecure warnings
+
 requests.packages.urllib3.disable_warnings()
 
 ''' GLOBAL VARS '''
@@ -939,7 +940,7 @@ def get_alert_related_files_command(client: MsClient, args: dict):
     from_index = min(offset, len(response_files_list))
     to_index = min(offset + limit, len(response_files_list))
     for file_obj in response_files_list[from_index:to_index]:
-        files_data_list.append(client.get_file_data(file_obj))
+        files_data_list.append(get_file_data(file_obj))
 
     context_output = {
         'AlertID': alert_id,
