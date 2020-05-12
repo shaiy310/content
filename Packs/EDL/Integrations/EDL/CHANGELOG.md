@@ -1,4 +1,5 @@
 ## [Unreleased]
+  - Removed panos_compatible parameter, all indicators exported by this integrations will be panos compatible. 
   - Added Request Parameters Through the URL
 
 ## [20.5.0] - 2020-05-12

@@ -33,7 +33,7 @@ Use the following arguments in the URL to change the request:
     * 0 - Do not collapse. 
     * 1 - Collapse to ranges.
     * 2 - Collapse to CIDRs.
- * Example: https://{cortex-xsoar_instance}/instance/execute/{ExportIndicators_instance_name}?q="type:ip and sourceBrand:my_source"&tr=1
+ * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?q="type:ip and sourceBrand:my_source"&tr=1
 
 ### When running in On-Demand mode
-Please make sure to to run !eis-update for the first time to initialize the export process.
+Please make sure to to run !edl-update for the first time to initialize the export process.

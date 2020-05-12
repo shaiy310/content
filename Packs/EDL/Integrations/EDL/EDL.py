@@ -146,6 +146,7 @@ def refresh_edl_context(request_args: RequestArguments) -> str:
         out_dict, actual_indicator_amount = create_values_for_returned_dict(iocs, request_args)
 
     out_dict["last_run"] = date_to_timestamp(now)
+    out_dict["current_iocs"] = iocs
     demisto.setIntegrationContext(out_dict)
     return out_dict[EDL_VALUES_KEY]
 
@@ -373,40 +374,54 @@ def create_values_for_returned_dict(iocs: list, request_args: RequestArguments) 
 
 def get_edl_ioc_values(on_demand: bool,
                        request_args: RequestArguments,
-                       last_update_data={},
-                       cache_refresh_rate=None) -> str:
+                       integration_context: dict,
+                       cache_refresh_rate: str = None) -> str:
     """
     Get the ioc list to return in the edl
+
+    Args:
+        on_demand: Whether on demand configuration is set to True or not
+        request_args: the request arguments
+        integration_context: The integration context
+        cache_refresh_rate: The cache_refresh_rate configuration value
+
+    Returns:
+        string representation of the iocs
     """
-    if last_update_data is None:
-        last_update_data = {}
-    last_run = last_update_data.get('last_run')
-    last_query = last_update_data.get('last_query')
-    current_iocs = last_update_data.get('current_iocs')
+    last_run = integration_context.get('last_run')
+    last_query = integration_context.get('last_query')
+    current_iocs = integration_context.get('current_iocs')
 
     # on_demand ignores cache
     if on_demand:
-        if request_args.is_request_change(last_update_data):
-            values_str = get_ioc_values_str_from_context(request_args=request_args, iocs=current_iocs)
+        if request_args.is_request_change(integration_context):
+            values_str = get_ioc_values_str_from_context(integration_context, request_args=request_args, iocs=current_iocs)
 
         else:
-            values_str = get_ioc_values_str_from_context(request_args=request_args)
+            values_str = get_ioc_values_str_from_context(integration_context, request_args=request_args)
     else:
         if last_run:
             cache_time, _ = parse_date_range(cache_refresh_rate, to_timestamp=True)
-            if last_run <= cache_time or request_args.is_request_change(last_update_data) or \
+            if last_run <= cache_time or request_args.is_request_change(integration_context) or \
                     request_args.query != last_query:
                 values_str = refresh_edl_context(request_args)
             else:
-                values_str = get_ioc_values_str_from_context(request_args=request_args)
+                values_str = get_ioc_values_str_from_context(integration_context, request_args=request_args)
         else:
             values_str = refresh_edl_context(request_args)
     return values_str
 
 
-def get_ioc_values_str_from_context(request_args: RequestArguments, iocs=None) -> str:
+def get_ioc_values_str_from_context(integration_context: dict, request_args: RequestArguments, iocs: list=None) -> str:
     """
     Extracts output values from cache
+
+    Args:
+        integration_context: The integration context
+        request_args: The request args
+        iocs: The current raw iocs data saved in the integration context
+    Returns:
+        string representation of the iocs
     """
     if iocs:
         if request_args.offset > len(iocs):
@@ -414,12 +429,11 @@ def get_ioc_values_str_from_context(request_args: RequestArguments, iocs=None) -
 
         iocs = iocs[request_args.offset: request_args.limit + request_args.offset]
         returned_dict, _ = create_values_for_returned_dict(iocs, request_args=request_args)
-        current_cache = demisto.getIntegrationContext()
-        current_cache['last_output'] = returned_dict
-        demisto.setIntegrationContext(current_cache)
+        integration_context['last_output'] = returned_dict
+        demisto.setIntegrationContext(integration_context)
 
     else:
-        returned_dict = demisto.getIntegrationContext().get('last_output', {})
+        returned_dict = integration_context.get('last_output', {})
 
     return returned_dict.get(EDL_VALUES_KEY, '')
 
@@ -477,33 +491,42 @@ def route_edl_values() -> Response:
             demisto.debug(err_msg)
             return Response(err_msg, status=401)
 
-    request_args = get_request_args(params)
+    request_args = get_request_args(request.args, params)
 
     values = get_edl_ioc_values(
         on_demand=params.get('on_demand'),
         request_args=request_args,
-        last_update_data=demisto.getIntegrationContext(),
+        integration_context=demisto.getIntegrationContext(),
         cache_refresh_rate=params.get('cache_refresh_rate'),
     )
     return Response(values, status=200, mimetype='text/plain')
 
 
-def get_request_args(params):
-    limit = try_parse_integer(request.args.get('n', params.get('edl_size', 10000)), EDL_LIMIT_ERR_MSG)
-    offset = try_parse_integer(request.args.get('s', 0), EDL_OFFSET_ERR_MSG)
-    query = request.args.get('q', params.get('indicators_query'))
-    strip_port = request.args.get('sp', params.get('url_port_stripping', False))
-    drop_invalids = request.args.get('di', params.get('drop_invalids', False))
-    collapse_ips = request.args.get('tr', params.get('collapse_ips', DONT_COLLAPSE))
+def get_request_args(request_args: dict, params: dict) -> RequestArguments:
+    """
+    Processing a flask request arguments and generates a RequestArguments instance from it.
+    Args:
+        request_args: Flask request arguments
+        params: Integration configuration parameters
+
+    Returns:
+        RequestArguments instance with processed arguments
+    """
+    limit = try_parse_integer(request_args.get('n', params.get('edl_size', 10000)), EDL_LIMIT_ERR_MSG)
+    offset = try_parse_integer(request_args.get('s', 0), EDL_OFFSET_ERR_MSG)
+    query = request_args.get('q', params.get('indicators_query'))
+    strip_port = request_args.get('sp', params.get('url_port_stripping', False))
+    drop_invalids = request_args.get('di', params.get('drop_invalids', False))
+    collapse_ips = request_args.get('tr', params.get('collapse_ips', DONT_COLLAPSE))
 
     # handle flags
-    if drop_invalids is not None and drop_invalids == '':
+    if drop_invalids == '':
         drop_invalids = True
 
-    if strip_port is not None and strip_port == '':
+    if strip_port == '':
         strip_port = True
 
-    if collapse_ips is not None and collapse_ips not in [DONT_COLLAPSE, COLLAPSE_TO_CIDR, COLLAPSE_TO_RANGES]:
+    if collapse_ips not in [DONT_COLLAPSE, COLLAPSE_TO_CIDR, COLLAPSE_TO_RANGES]:
         collapse_ips = try_parse_integer(collapse_ips, EDL_COLLAPSE_ERR_MSG)
 
         if collapse_ips not in [0, 1, 2]:
