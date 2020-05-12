@@ -43,11 +43,21 @@ class Client(BaseClient):
 
         table_rows = soup.select("tbody tr")
         for row in table_rows:
-            found_domains = [string.strip() for string in row.strings if re.search(r'microsoft\.(com|net)', string)]
+            found_domains = [string.strip() for string in row.strings if re.search(
+                r'(microsoft\.(com|net))|'
+                r'microsoftonline\.com|'
+                r'officeconfig\.msocdn\.com|'
+                r'config\.office\.com|'
+                r'graph\.windows\.net',
+                string)]
             if found_domains:
                 domains += found_domains
-                ipv4s += [string.strip() for string in row.strings if re.match(ipv4Regex, string)]
-                ipv4cidrs += [string.strip() for string in row.strings if re.match(ipv4cidrRegex, string)]
+                for string in row.strings:
+                    string = string.strip()
+                    if re.match(ipv4cidrRegex, string):
+                        ipv4cidrs.append(string)
+                    elif re.match(ipv4Regex, string):
+                        ipv4s.append(string)
 
         for domain in domains:
             result.append({
