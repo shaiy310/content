@@ -95,7 +95,8 @@ class MsGraphClient:
         return response
 
 
-def fetch_incidents(client: MsGraphClient, fetch_time: str, fetch_limit: int, filter_param: str, providers_param: str):
+def fetch_incidents(client: MsGraphClient, fetch_time: str, fetch_limit: int, filter_param: str, providers_param: str) \
+        -> list:
     filter_query = ""
     if providers_param:
         providers_query = []
@@ -105,6 +106,8 @@ def fetch_incidents(client: MsGraphClient, fetch_time: str, fetch_limit: int, fi
         filter_query = (" or ".join(providers_query))
     if filter_param:  # overrides the providers query, if given
         filter_query = filter_param
+
+    severity_map = {'low': 1, 'medium': 2, 'high': 3, 'unknown': 0, 'informational': 0}
 
     last_run = demisto.getLastRun()
     timestamp_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -133,7 +136,7 @@ def fetch_incidents(client: MsGraphClient, fetch_time: str, fetch_limit: int, fi
                 demisto_incidents.append({
                     'name': incident.get('title'),
                     'occurred': incident.get('createdDateTime'),
-                    # 'severity':  3,   todo: map severity field to demisto severity
+                    'severity': severity_map.get(incident.get('severity', ''), 0),  # todo: check with Arseny
                     'rawJSON': json.dumps(incident)
                 })
                 count += 1
@@ -144,7 +147,7 @@ def fetch_incidents(client: MsGraphClient, fetch_time: str, fetch_limit: int, fi
     if not demisto_incidents:
         new_last_run.update({'time': now})
     demisto.setLastRun(new_last_run)
-    demisto.incidents(demisto_incidents)
+    return demisto_incidents
 
 
 def search_alerts_command(client: MsGraphClient, args):
@@ -506,8 +509,9 @@ def main():
             fetch_limit = params.get('fetch_limit', 10)
             fetch_providers = params.get('fetch_providers', '')
             fetch_filter = params.get('fetch_filter', '')
-            fetch_incidents(client, fetch_time=fetch_time, fetch_limit=int(fetch_limit),
-                            filter_param=fetch_filter, providers_param=fetch_providers)
+            incidents = fetch_incidents(client, fetch_time=fetch_time, fetch_limit=int(fetch_limit),
+                                        filter_param=fetch_filter, providers_param=fetch_providers)
+            demisto.incidents(incidents)
         else:
             human_readable, entry_context, raw_response = commands[command](client, demisto.args())  # type: ignore
             return_outputs(readable_output=human_readable, outputs=entry_context, raw_response=raw_response)
