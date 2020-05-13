@@ -37,7 +37,9 @@ configuration:
   name: proxy
   required: false
   type: 8
-description: This is the Hello World integration for getting started.
+description: VMware Carbon Black Enterprise EDR is an advanced threat hunting and
+  incident response solution delivering continuous visibility for top security operations
+  centers (SOCs) and incident response (IR) teams.
 display: Carbon Black Enterprise EDR
 name: Carbon Black Enterprise EDR
 script:
@@ -696,6 +698,104 @@ script:
     - contextPath: CarbonBlackEEDR.Alert.workflow.state
       description: Alert workflow - state
       type: String
+  - deprecated: false
+    description: Retrieve all watchlists.
+    execution: false
+    name: cb-eedr-watchlist-list
+    outputs:
+    - contextPath: CarbonBlackEEDR.Watchlist.classifier
+      description: Watchlist classifier.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.last_update_timestamp
+      description: Watchlist last updated timestamp.
+      type: Date
+    - contextPath: CarbonBlackEEDR.Watchlist.name
+      description: Watchlist name.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.report_ids
+      description: Watchlist report ids.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.create_timestamp
+      description: Watchlist create timestamp.
+      type: Date
+    - contextPath: CarbonBlackEEDR.Watchlist.id
+      description: Watchlist ID.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.tags_enabled
+      description: Is tags enabled for watchlist
+      type: Boolean
+    - contextPath: CarbonBlackEEDR.Watchlist.description
+      description: Watchlist description.
+      type: String
+  - arguments:
+    - default: false
+      description: The watchlist ID.
+      isArray: false
+      name: watchlist_id
+      required: true
+      secret: false
+    deprecated: false
+    description: Get watchlist information by id.
+    execution: false
+    name: cb-eedr-get-watchlist-by-id
+    outputs:
+    - contextPath: CarbonBlackEEDR.Watchlist.classifier
+      description: Watchlist classifier.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.last_update_timestamp
+      description: Watchlist last updated timestamp.
+      type: Date
+    - contextPath: CarbonBlackEEDR.Watchlist.name
+      description: Watchlist name.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.report_ids
+      description: Watchlist report ids.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.create_timestamp
+      description: Watchlist create timestamp.
+      type: Date
+    - contextPath: CarbonBlackEEDR.Watchlist.id
+      description: Watchlist ID.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.tags_enabled
+      description: Is tags enabled for watchlist
+      type: Boolean
+    - contextPath: CarbonBlackEEDR.Watchlist.description
+      description: Watchlist description.
+      type: String
+  - arguments:
+    - default: false
+      description: The watchlist ID.
+      isArray: false
+      name: watchlist_id
+      required: true
+      secret: false
+    deprecated: false
+    description: Retrieve alert status for watchlist with watchlist_id
+    execution: false
+    name: cb-eedr-watchlist-alerts-status
+  - arguments:
+    - default: false
+      description: The watchlist ID.
+      isArray: false
+      name: watchlist_id
+      required: true
+      secret: false
+    deprecated: false
+    description: Turn on alerts for watchlist with watchlist_id.
+    execution: false
+    name: cb-eedr-watchlist-alerts-enable
+  - arguments:
+    - default: false
+      description: The watchlist ID.
+      isArray: false
+      name: watchlist_id
+      required: true
+      secret: false
+    deprecated: false
+    description: Turn off alerts for watchlist with watchlist_id.
+    execution: false
+    name: cb-eedr-watchlist-alerts-disable
   dockerimage: demisto/python3:3.7.4.2245
   feed: false
   isfetch: true

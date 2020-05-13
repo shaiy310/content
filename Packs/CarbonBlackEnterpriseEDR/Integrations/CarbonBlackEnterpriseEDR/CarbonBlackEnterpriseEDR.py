@@ -13,6 +13,16 @@ requests.packages.urllib3.disable_warnings()
 CB_ORG_KEY = demisto.params().get('organization_key')
 
 
+def convert_unix_to_timestamp(timestamp):
+    """
+    Convert millise since epoch to date formatted MM/DD/YYYYTHH:MI:SS
+    """
+    if timestamp:
+        date_time = datetime.utcfromtimestamp(timestamp / 1000)
+        return date_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+    return ''
+
+
 class Client(BaseClient):
     """
     Client will implement the service API, and should not contain any Demisto logic.
@@ -202,7 +212,7 @@ class Client(BaseClient):
         suffix_url = f'/appservices/v6/orgs/{CB_ORG_KEY}/device_actions'
 
         body = {
-            'action_type': 'UPDATE_POLIC',
+            'action_type': 'UPDATE_POLICY',
             'device_id': device_id,
             'options': {
                 'policy_id': policy_id
@@ -211,13 +221,43 @@ class Client(BaseClient):
 
         return self._http_request('POST', suffix_url, json_data=body, resp_type='content')
 
+    def list_watchlists_request(self) -> Dict:
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists'
+        return self._http_request('GET', suffix_url)
+
+    def get_watchlist_by_id_request(self, watchlist_id: str) -> Dict:
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}'
+        return self._http_request('GET', suffix_url)
+
+    def delete_watchlist_request(self, watchlist_id: str):
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}'
+        return self._http_request('DELETE', suffix_url)
+
+    def watchlist_alert_status_request(self, watchlist_id: str):
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}/alert'
+        return self._http_request('GET', suffix_url)
+
+    def enable_watchlist_alert_request(self, watchlist_id: str):
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}/alert'
+        return self._http_request('PUT', suffix_url)
+
+    def disable_watchlist_alert_request(self, watchlist_id: str):
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}/alert'
+        return self._http_request('DELETE', suffix_url, resp_type='content')
+
 
 def test_module(client):
     """
     Returning 'ok' indicates that the integration works like it is supposed to. Connection to the service is successful.
 
     Args:
-        client: HelloWorld client.
+        client: Carbon Black Enterprise EDR  client
 
     Returns:
         'ok' if test passed, anything else will fail the test.
@@ -415,6 +455,93 @@ def device_policy_update_command(client: Client, args: dict) -> str:
 
     return f'The policy {policy_id} has been assigned to device {device_id} successfully.'
 
+
+def list_watchlists_command(client: Client) -> CommandResults:
+
+    contents = []
+    headers = ['ID', 'Name', 'Description', 'create_timestamp', 'Alerts_enabled', 'Tags_enabled', 'Report_ids',
+               'Last_update_timestamp', 'Classifier']
+    result = client.list_watchlists_request()
+    watchlists = result.get('results')
+    if not watchlists:
+        return 'No watchlists were found.'
+
+    for watchlist in watchlists:
+        contents.append({
+            'Name': watchlist.get('name'),
+            'ID': watchlist.get('id'),
+            'Description': watchlist.get('description'),
+            'Tags_enabled': watchlist.get('tags_enabled'),
+            'Alerts_enabled': watchlist.get('alerts_enabled'),
+            'create_timestamp': convert_unix_to_timestamp(watchlist.get('create_timestamp')),
+            'Last_update_timestamp': convert_unix_to_timestamp(watchlist.get('last_update_timestamp')),
+            'Report_ids': watchlist.get('report_ids'),
+            'Classifier': watchlist.get('classifier')
+        })
+
+    readable_output = tableToMarkdown('Watchlists list ', contents, headers, removeNull=True)
+    results = CommandResults(
+        outputs_prefix='CarbonBlackEEDR.Watchlist',
+        outputs_key_field='id',
+        outputs=contents,
+        readable_output=readable_output,
+        raw_response=result
+    )
+    return results
+
+
+def get_watchlist_by_id_command(client: Client, args: dict) -> CommandResults:
+
+    watchlist_id = args.get('watchlist_id')
+    result = client.get_watchlist_by_id_request(watchlist_id)
+    headers = ['ID', 'Name', 'Description', 'create_timestamp', 'Alerts_enabled', 'Tags_enabled', 'Report_ids',
+               'Last_update_timestamp', 'Classifier']
+
+    contents = {
+        'Name': result.get('name'),
+        'ID': result.get('id'),
+        'Description': result.get('description'),
+        'Tags_enabled': result.get('tags_enabled'),
+        'Alerts_enabled': result.get('alerts_enabled'),
+        'create_timestamp': convert_unix_to_timestamp(result.get('create_timestamp')),
+        'Last_update_timestamp': convert_unix_to_timestamp(result.get('last_update_timestamp')),
+        'Report_ids': result.get('report_ids'),
+        'Classifier': result.get('classifier')
+    }
+
+    readable_output = tableToMarkdown(f'Watchlist {watchlist_id} information', contents, headers, removeNull=True)
+    results = CommandResults(
+        outputs_prefix='CarbonBlackEEDR.Watchlist',
+        outputs_key_field='id',
+        outputs=contents,
+        readable_output=readable_output,
+        raw_response=result
+    )
+    return results
+
+
+def watchlist_alert_status_command(client: Client, args: dict) -> str:
+    watchlist_id = args.get('watchlist_id')
+    result = client.watchlist_alert_status_request(watchlist_id)
+
+    if not result.get('alert'):
+        return f'Watchlist {watchlist_id} alert status is false'
+    else:
+        return f'Watchlist {watchlist_id} alert status is true'
+
+
+def enable_watchlist_alert_command(client: Client, args: dict) -> str:
+    watchlist_id = args.get('watchlist_id')
+    client.enable_watchlist_alert_request(watchlist_id)
+
+    return f'Watchlist {watchlist_id} alert was enabled successfully.'
+
+
+def disable_watchlist_alert_command(client: Client, args: dict) -> str:
+    watchlist_id = args.get('watchlist_id')
+    client.disable_watchlist_alert_request(watchlist_id)
+
+    return f'Watchlist {watchlist_id} alert was disabled successfully.'
 # def fetch_incidents(client, last_run, first_fetch_time):
 #     """
 #     This function will execute each interval (default is 1 minute).
@@ -526,6 +653,21 @@ def main():
 
         elif demisto.command() == 'cb-eedr-device-policy-update':
             return_results(device_policy_update_command(client, demisto.args()))
+
+        elif demisto.command() == 'cb-eedr-watchlist-list':
+            return_results(list_watchlists_command(client))
+
+        elif demisto.command() == 'cb-eedr-get-watchlist-by-id':
+            return_results(get_watchlist_by_id_command(client, demisto.args()))
+
+        elif demisto.command() == 'cb-eedr-watchlist-alerts-status':
+            return_results(watchlist_alert_status_command(client, demisto.args()))
+
+        elif demisto.command() == 'cb-eedr-watchlist-alerts-enable':
+            return_results(enable_watchlist_alert_command(client, demisto.args()))
+
+        elif demisto.command() == 'cb-eedr-watchlist-alerts-disable':
+            return_results(disable_watchlist_alert_command(client, demisto.args()))
 
     # Log exceptions
     except Exception as e:

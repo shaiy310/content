@@ -1,3 +1,3 @@
-## Hello World
+## Carbon Black Enterprise EDR
 - This text is markdown
 - Here you should explain how to configure the instance in Demisto
