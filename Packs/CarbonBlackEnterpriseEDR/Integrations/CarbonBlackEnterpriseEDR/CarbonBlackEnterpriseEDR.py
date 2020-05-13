@@ -217,7 +217,7 @@ def test_module(client):
     Returning 'ok' indicates that the integration works like it is supposed to. Connection to the service is successful.
 
     Args:
-        client: HelloWorld client
+        client: HelloWorld client.
 
     Returns:
         'ok' if test passed, anything else will fail the test.
