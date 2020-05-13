@@ -1,6 +1,6 @@
 ## [Unreleased]
 - Fixed an issue where running the ***panorama-get-url-category*** command multiple times, displayed previous results in the war room.
-
+- Replacing the spaces in URL context output of **!panorama-create-edl** command to `%20`   
 
 ## [20.5.0] - 2020-05-12
 - Fixed an issue where commands resulting with an empty list would raise an error instead of a warning.
