@@ -396,7 +396,7 @@ tasks:
     task:
       id: 90b37bac-8378-4d06-84cc-4649434745a7
       version: -1
-      name: "List 'c:\\Users' Directory "
+      name: "List \'c:\\Users\' Directory "
       description: ''
       script: carbonblackliveresponse|||cb-command-create-and-wait
       type: regular
