@@ -34,12 +34,10 @@ configuration:
   required: false
   type: 8
 - display: Fetch incidents
-  hidden: false
   name: isFetch
   required: false
   type: 8
 - display: Incident type
-  hidden: false
   name: incidentType
   required: false
   type: 13
