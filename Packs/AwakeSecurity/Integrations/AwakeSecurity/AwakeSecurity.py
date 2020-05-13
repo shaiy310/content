@@ -12,7 +12,7 @@ requests.packages.urllib3.disable_warnings()
 ''' GLOBALS '''
 handle_proxy()
 params = demisto.params()
-server = params["server"]
+server = params["server"].rstrip('/')
 prefix = server + "/awakeapi/v1"
 verify = not params.get('unsecure', False)
 credentials = params["credentials"]
@@ -44,12 +44,18 @@ def get_authtoken():
         return authTokenResponse.json()["token"]["value"]
 
     else:
+        error_string = "######## First Attempt of authtoken failed with error code {}\n reason: {}\n content: {}".format(
+            authTokenResponse.status_code, authTokenResponse.reason, authTokenResponse.content)
+        demisto.debug(error_string)
         authTokenResponse = requests.post(prefix + "/authtoken", json=authTokenRequest_v2, verify=verify,
                                           headers=headers)
         if authTokenResponse.status_code == 200:
             return authTokenResponse.json()["token"]["value"]
 
         else:
+            error_string = "######## Second Attempt of authtoken failed with error code {}\n reason: {}\n content: {}".format(
+                authTokenResponse.status_code, authTokenResponse.reason, authTokenResponse.content)
+            demisto.debug(error_string)
             raise DemistoException("Authtoken could not be fetched - check the given credentials.")
 
 
