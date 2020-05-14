@@ -1578,11 +1578,14 @@ script:
       name: alias
       required: false
       secret: false
-    - default: false
-      defaultValue: isolated,unisolated
+    - auto: PREDEFINED
+      default: false
       description: If an endpoint has been isolated.
       isArray: false
       name: isolate
+      predefined:
+      - isolated
+      - unisolated
       required: false
       secret: false
     - default: false

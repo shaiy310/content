@@ -523,6 +523,9 @@ def test_whitelist_files_command(test_data, requests_mock):
 def test_quarantine_command(test_data, requests_mock):
     from PaloAltoNetworks_XDR import quarantine_file_command, Client
 
+    command_output = ('### Quarantine files\n|action_id|\n|---|\n| 346 |\n',
+     {'PaloAltoNetworksXDR.QuarantineFiles.action_id(val.id == obj.id)': 346}, {'action_id': 346})
+
     quarantine_files_expected_tesult = test_data[0]['command_expected_result']
     requests_mock.post(f'{XDR_URL}/public_api/v1/audits/endpoints/quarantine/', json=test_data[0]['api_response'])
 
