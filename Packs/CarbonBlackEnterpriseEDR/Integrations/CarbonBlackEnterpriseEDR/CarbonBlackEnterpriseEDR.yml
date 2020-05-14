@@ -851,6 +851,45 @@ script:
     description: Create a new report or classifier watchlist.
     execution: false
     name: cb-eedr-watchlist-create
+    outputs:
+    - contextPath: CarbonBlackEEDR.Watchlist.Classifier
+      description: The watchlist classifier
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.Last_update_timestamp
+      description: Watchlist last update timestamp.
+      type: Date
+    - contextPath: CarbonBlackEEDR.Watchlist.Name
+      description: Watchlist name.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.Report_ids
+      description: Watchlist report id.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.Create_timestamp
+      description: Watchlist create timestamp.
+      type: Date
+    - contextPath: CarbonBlackEEDR.Watchlist.Alerts_enabled
+      description: Is the alerts enabled in watchlist
+      type: Boolean
+    - contextPath: CarbonBlackEEDR.Watchlist.ID
+      description: Watchlist ID.
+      type: String
+    - contextPath: CarbonBlackEEDR.Watchlist.Tags_enabled
+      description: Is the tags enabled in watchlist
+      type: Boolean
+    - contextPath: CarbonBlackEEDR.Watchlist.Description
+      description: Watchlist description.
+      type: String
+  - arguments:
+    - default: false
+      description: The watchlist ID to remove.
+      isArray: false
+      name: watchlist_id
+      required: true
+      secret: false
+    deprecated: false
+    description: Remove watchlist with watchlist_id.
+    execution: false
+    name: cb-eedr-watchlist-delete
   dockerimage: demisto/python3:3.7.4.2245
   feed: false
   isfetch: true

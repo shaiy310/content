@@ -234,7 +234,7 @@ class Client(BaseClient):
     def delete_watchlist_request(self, watchlist_id: str):
 
         suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}'
-        return self._http_request('DELETE', suffix_url)
+        return self._http_request('DELETE', suffix_url, resp_type='content')
 
     def watchlist_alert_status_request(self, watchlist_id: str):
 
@@ -590,7 +590,7 @@ def create_watchlist_command(client: Client, args: dict) -> CommandResults:
         'Classifier': result.get('classifier')
     }
 
-    readable_output = tableToMarkdown(f'The watchlist {watchlist_name} created successfully.', contents, headers,
+    readable_output = tableToMarkdown(f'The watchlist "{watchlist_name}" created successfully.', contents, headers,
                                       removeNull=True)
     results = CommandResults(
         outputs_prefix='CarbonBlackEEDR.Watchlist',
@@ -600,6 +600,14 @@ def create_watchlist_command(client: Client, args: dict) -> CommandResults:
         raw_response=result
     )
     return results
+
+
+def delete_watchlist_command(client: Client, args: dict) -> str:
+    watchlist_id = args.get('watchlist_id')
+    client.delete_watchlist_request(watchlist_id)
+
+    return f'The watchlist {watchlist_id} was deleted successfully.'
+
 # def fetch_incidents(client, last_run, first_fetch_time):
 #     """
 #     This function will execute each interval (default is 1 minute).
@@ -729,6 +737,9 @@ def main():
 
         elif demisto.command() == 'cb-eedr-watchlist-create':
             return_results(create_watchlist_command(client, demisto.args()))
+
+        elif demisto.command() == 'cb-eedr-watchlist-delete':
+            return_results(delete_watchlist_command(client, demisto.args()))
 
     # Log exceptions
     except Exception as e:
