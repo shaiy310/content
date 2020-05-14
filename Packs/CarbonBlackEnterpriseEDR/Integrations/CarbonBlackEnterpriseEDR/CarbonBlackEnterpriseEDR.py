@@ -251,6 +251,21 @@ class Client(BaseClient):
         suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists/{watchlist_id}/alert'
         return self._http_request('DELETE', suffix_url, resp_type='content')
 
+    def create_watchlist_request(self, watchlist_name: str, description: str, tags_enabled: bool, alerts_enabled: bool,
+                                 report_ids: Union[list, str], classifier: dict) -> Dict:
+
+        suffix_url = f'/threathunter/watchlistmgr/v3/orgs/{CB_ORG_KEY}/watchlists'
+        body = assign_params(
+            name=watchlist_name,
+            description=description,
+            tags_enabled=tags_enabled,
+            alerts_enabled=alerts_enabled,
+            report_ids=report_ids,
+            classifier=classifier
+        )
+
+        return self._http_request('POST', suffix_url, json_data=body)
+
 
 def test_module(client):
     """
@@ -542,6 +557,49 @@ def disable_watchlist_alert_command(client: Client, args: dict) -> str:
     client.disable_watchlist_alert_request(watchlist_id)
 
     return f'Watchlist {watchlist_id} alert was disabled successfully.'
+
+
+def create_watchlist_command(client: Client, args: dict) -> CommandResults:
+
+    watchlist_name = args.get('watchlist_name')
+    description = args.get('description')
+    tags_enabled = args.get('tags_enabled')
+    alerts_enabled = args.get('alerts_enabled')
+    report_ids = argToList(args.get('report_ids'))
+    classifier = {
+        'key': args.get('classifier_key'),
+        'value': args.get('classifier_value')
+    }
+
+    if classifier and report_ids:
+        raise Exception('Please specify report or classifier but not both.')
+
+    headers = ['Name', 'ID', 'Description', 'Create_timestamp', 'Tags_enabled', 'Alerts_enabled', 'Report_ids',
+               'Classifier']
+
+    result = client.create_watchlist_request(watchlist_name, description, tags_enabled, alerts_enabled, report_ids,
+                                             classifier)
+    contents = {
+        'Name': result.get('name'),
+        'ID': result.get('id'),
+        'Description': result.get('description'),
+        'Tags_enabled': result.get('tags_enabled'),
+        'Alerts_enabled': result.get('alerts_enabled'),
+        'Create_timestamp': convert_unix_to_timestamp(result.get('create_timestamp')),
+        'Report_ids': result.get('report_ids'),
+        'Classifier': result.get('classifier')
+    }
+
+    readable_output = tableToMarkdown(f'The watchlist {watchlist_name} created successfully.', contents, headers,
+                                      removeNull=True)
+    results = CommandResults(
+        outputs_prefix='CarbonBlackEEDR.Watchlist',
+        outputs_key_field='id',
+        outputs=contents,
+        readable_output=readable_output,
+        raw_response=result
+    )
+    return results
 # def fetch_incidents(client, last_run, first_fetch_time):
 #     """
 #     This function will execute each interval (default is 1 minute).
@@ -668,6 +726,9 @@ def main():
 
         elif demisto.command() == 'cb-eedr-watchlist-alerts-disable':
             return_results(disable_watchlist_alert_command(client, demisto.args()))
+
+        elif demisto.command() == 'cb-eedr-watchlist-create':
+            return_results(create_watchlist_command(client, demisto.args()))
 
     # Log exceptions
     except Exception as e:

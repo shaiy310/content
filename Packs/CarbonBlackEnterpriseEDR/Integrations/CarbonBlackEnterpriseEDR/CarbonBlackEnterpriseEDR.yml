@@ -796,6 +796,61 @@ script:
     description: Turn off alerts for watchlist with watchlist_id.
     execution: false
     name: cb-eedr-watchlist-alerts-disable
+  - arguments:
+    - default: false
+      description: The name of the watchlist.
+      isArray: false
+      name: watchlist_name
+      required: true
+      secret: false
+    - default: false
+      description: The watchlist description.
+      isArray: false
+      name: description
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Enable watchlist tags
+      isArray: false
+      name: tags_enabled
+      predefined:
+      - 'true'
+      - 'false'
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Enable watchlist alerts
+      isArray: false
+      name: alerts_enabled
+      predefined:
+      - 'true'
+      - 'false'
+      required: false
+      secret: false
+    - default: false
+      description: The report ids for creating the watchlist.
+      isArray: false
+      name: report_ids
+      required: false
+      secret: false
+    - default: false
+      description: The classifier key for creating the watchlist.
+      isArray: false
+      name: classifier_key
+      required: false
+      secret: false
+    - default: false
+      description: The classifier value for creating the watchlist.
+      isArray: false
+      name: classifier_value
+      required: false
+      secret: false
+    deprecated: false
+    description: Create a new report or classifier watchlist.
+    execution: false
+    name: cb-eedr-watchlist-create
   dockerimage: demisto/python3:3.7.4.2245
   feed: false
   isfetch: true
